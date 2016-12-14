@@ -6,7 +6,8 @@ import RPi.GPIO as GPIO
 ledPin = 21;
 pumpPin = 16;# may change it later
 lightThresh = 750
-global ledStatus
+moistureThresh 
+global on
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -32,18 +33,19 @@ stopM = 57
 ##Save the last time a pump was active
 ##Having a minimum time between pump cycles ensures that the soil has enough time to absorb the water
 ##and the moisture sensor can read the new values. Decreasing the time between pump cycles increases the danger of pumping too much water
-lastPumpTime = [time.time(),time.time()]
-minTimeBetweenPumps = 30
+# lastPumpTime = [time.time(),time.time()]
+# minTimeBetweenPumps = 30
 
-def switchPump(pump):
+def switchPump(pumpTurnOnSignal):
     
-    timeDelta = time.time() - lastPumpTime[pump]
-    
-    if timeDelta > minTimeBetweenPumps:
-        GPIO.output(pumpPin, GPIO.LOW)
-        time.sleep(pumpTime)
-        GPIO.output(pumpPin, GPIO.HIGH)
-        lastPumpTime[pump] = time.time()
+#     timeDelta = time.time() - lastPumpTime[pump]
+    if(pumpTurnOnSignal):
+        GPIO.ouput(pumpPin,GPIO.HIGH)
+    else:
+        GPIO.ouput(pumpPin,GPIO.LOW)
+#     if timeDelta > minTimeBetweenPumps:
+   
+#         lastPumpTime[pump] = time.time()
 ##############################################################
 print('Reading ADS1x15 values, press Ctrl-C to quit...')
 # Print nice channel column headers.
@@ -73,23 +75,22 @@ while True:
     veg2 = readVegTwo()
     waterLev = readWaterLev()
 
-if (t.hour > startH or (t.hour == startH and t.minute >= startM)) and (t.hour < stopH or (t.hour == stopH and t.minute < stopM)):
+
     if lightReading < lightThresh and on is False:
         print("Should be on")
             switchLeds(True)
-        elif light > lightThresh and on is True:
+    elif  lightReading > lightThresh and on is True:
             print("Should be on, but ambient light is high enough")
             switchLeds(False)
 
-else:
-    print("Should be off")
-        if on is True:
-            switchLeds(False)
 
 
-for i in range (0, len(moisture)):
-    if moisture[i] < moistureThresh[i]:
-        switchPump(i)
+
+    if veg1 < moistureThresh:
+        switchPump(True)
+    elif veg1 > moistureThresh:
+        switchPump(False)
+        
     
     time.sleep(2)
 
